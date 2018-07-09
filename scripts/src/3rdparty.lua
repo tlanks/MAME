@@ -1092,8 +1092,7 @@ project "bx"
 		includedirs {
 			MAME_DIR .. "3rdparty/bx/include/compat/mingw",
 		}
-
-	configuration { "osx* or xcode4" }
+	configuration { "macosx or xcode4" }
 		includedirs {
 			MAME_DIR .. "3rdparty/bx/include/compat/osx",
 		}
@@ -1169,7 +1168,7 @@ project "bimg"
 			MAME_DIR .. "3rdparty/bx/include/compat/mingw",
 		}
 
-	configuration { "osx* or xcode4" }
+	configuration { "macosx or xcode4" }
 		includedirs {
 			MAME_DIR .. "3rdparty/bx/include/compat/osx",
 		}
@@ -1251,7 +1250,7 @@ end
 			MAME_DIR .. "3rdparty/bx/include/compat/mingw",
 		}
 
-	configuration { "osx* or xcode4" }
+	configuration { "macosx or xcode4" }
 		includedirs {
 			MAME_DIR .. "3rdparty/bx/include/compat/osx",
 		}
@@ -2001,7 +2000,7 @@ end
 			"-Wno-incompatible-pointer-types-discards-qualifiers"
 		}
 
-	configuration { "osx*"}
+	configuration { "macosx"}
 		buildoptions {
 			"-Wno-undef",
 		}

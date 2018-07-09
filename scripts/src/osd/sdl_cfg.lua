@@ -136,7 +136,7 @@ elseif _OPTIONS["targetos"]=="freebsd" then
 	}
 end
 
-configuration { "osx*" }
+configuration { "macosx" }
 	includedirs {
 		MAME_DIR .. "3rdparty/bx/include/compat/osx",
 	}

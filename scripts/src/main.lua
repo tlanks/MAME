@@ -27,6 +27,11 @@ end
 	kind "ConsoleApp"
 
 	configuration { "android*" }
+if _OPTIONS["osd"] == "retro" then
+		linkoptions {
+			"-shared",
+		}
+else
 		targetprefix "lib"
 		targetname "main"
 		targetextension ".so"
@@ -34,12 +39,22 @@ end
 			"-shared",
 			"-Wl,-soname,libmain.so"
 		}
+end
 		links {
 			"EGL",
 			"GLESv1_CM",
 			"GLESv2",
-			"SDL2",
+-- RETRO HACK no sdl for libretro android
+--			"SDL2",
 		}
+if _OPTIONS["osd"] == "retro" then
+
+else
+               links {
+                        "SDL2",
+                }
+end
+-- RETRO HACK END no sdl for libretro android
 	configuration { "pnacl" }
 		kind "ConsoleApp"
 		targetextension ".pexe"
@@ -142,6 +157,11 @@ end
 
 	configuration { "asmjs" }
 		targetextension ".bc"
+-- RETRO HACK no sdl for libretro android
+if _OPTIONS["osd"] == "retro" then
+
+
+else
 		if os.getenv("EMSCRIPTEN") then
 			local emccopts = ""
 				.. " -O" .. _OPTIONS["OPTIMIZE"]
@@ -180,10 +200,63 @@ end
 				os.getenv("EMSCRIPTEN") .. "/emcc " .. emccopts .. " $(TARGET) -o " .. _MAKE.esc(MAME_DIR) .. _OPTIONS["target"] .. _OPTIONS["subtarget"] .. ".js",
 			}
 		end
+end
+	-- BEGIN libretro overrides to MAME's GENie build
+	configuration { "libretro*" }
+		kind "SharedLib"	
+		targetsuffix "_libretro"
+		if _OPTIONS["targetos"]=="android" then
+			targetsuffix "_libretro_android"
+			defines {
+ 				"SDLMAME_ARM=1",
+			}
+		elseif _OPTIONS["targetos"]=="asmjs" then
+			targetsuffix "_libretro_emscripten"
+			linkoptions {
+				 "-s DISABLE_EXCEPTION_CATCHING=2",
+				 "-s EXCEPTION_CATCHING_WHITELIST='[\"__ZN15running_machine17start_all_devicesEv\",\"__ZN12cli_frontend7executeEiPPc\"]'",			}
+		elseif _OPTIONS["targetos"]=="ios-arm" then
+			targetsuffix "_libretro_ios"
+			targetextension ".dylib"
+		elseif _OPTIONS["targetos"]=="windows" then
+			targetextension ".dll"
+			flags {
+				"NoImportLib",
+			}
+		elseif _OPTIONS["targetos"]=="osx" then
+			targetextension ".dylib"
+		else
+			targetsuffix "_libretro"
+		end
 
+		targetprefix ""
+
+		includedirs {
+			MAME_DIR .. "src/osd/libretro/libretro-internal",
+		}
+
+		files {
+			MAME_DIR .. "src/osd/libretro/libretro-internal/libretro.cpp"
+		}
+
+		-- Ensure the public API is made public with GNU ld
+		if _OPTIONS["targetos"]=="linux" then
+			linkoptions {
+				"-Wl,--version-script=" .. MAME_DIR .. "src/osd/libretro/libretro-internal/link.T",
+			}
+		end
+
+	-- END libretro overrides to MAME's GENie build
 	configuration { }
 
 	if _OPTIONS["targetos"]=="android" then
+-- RETRO HACK no sdl for libretro android
+if _OPTIONS["osd"] == "retro" then
+
+		if _OPTIONS["SEPARATE_BIN"]~="1" then
+			targetdir(MAME_DIR)
+		end
+else
 		includedirs {
 			MAME_DIR .. "3rdparty/SDL2/include",
 		}
@@ -212,6 +285,8 @@ end
 				targetdir(MAME_DIR .. "android-project/app/src/main/libs/x86_64")
 			end
 		end
+end
+-- RETRO HACK END no sdl for libretro android
 	else
 		if _OPTIONS["SEPARATE_BIN"]~="1" then
 			targetdir(MAME_DIR)
@@ -224,9 +299,15 @@ end
 	links {
 		"osd_" .. _OPTIONS["osd"],
 	}
+-- RETRO HACK no qt
+if _OPTIONS["osd"]=="retro" then
+
+else
 	links {
 		"qtdbg_" .. _OPTIONS["osd"],
 	}
+end
+-- RETRO HACK END
 if (STANDALONE~=true) then
 	links {
 		"frontend",
@@ -320,7 +401,38 @@ end
 		ext_includedir("flac"),
 	}
 
+-- RETRO HACK
+	if _OPTIONS["osd"]=="retro" then
+ 
+       forcedincludes {
+			MAME_DIR .. "src/osd/libretro/retroprefix.h"
+		}
 
+		includedirs {
+			MAME_DIR .. "src/emu",
+			MAME_DIR .. "src/osd",
+			MAME_DIR .. "src/lib",
+			MAME_DIR .. "src/lib/util",
+			MAME_DIR .. "src/osd/libretro",
+			MAME_DIR .. "src/osd/modules/render",
+			MAME_DIR .. "3rdparty",
+			MAME_DIR .. "3rdparty/bgfx/include",
+			MAME_DIR .. "3rdparty/bx/include",
+			MAME_DIR .. "src/osd/libretro/libretro-internal",
+		}
+
+  	if _OPTIONS["targetos"]=="windows" then
+  		includedirs {
+  			MAME_DIR .. "3rdparty/winpcap/Include",
+		}
+	end
+
+		files {
+			MAME_DIR .. "src/osd/libretro/retromain.cpp",
+			MAME_DIR .. "src/osd/libretro/libretro-internal/libretro.cpp",
+		}
+	end
+-- RETRO HACK
 if (STANDALONE==true) then
 	standalone();
 end
